@@ -8,43 +8,35 @@
 #
 
 library(shiny)
+library(leaflet)
+library(sf)
+
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
 
     # Application title
-    titlePanel("Old Faithful Geyser Data"),
-
-    # Sidebar with a slider input for number of bins 
-    sidebarLayout(
-        sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30)
-        ),
-
-        # Show a plot of the generated distribution
-        mainPanel(
-           plotOutput("distPlot")
-        )
-    )
+    titlePanel("Map of Singapore"),
+    
+    leafletOutput("map"),
+    
+    dataTableOutput("KeyFacts"),
+    
+    textOutput("description")
 )
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
 
-    output$distPlot <- renderPlot({
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white',
-             xlab = 'Waiting time to next eruption (in mins)',
-             main = 'Histogram of waiting times')
-    })
+  singapore_data <- st_layers("gadm41_SGP.gpkg")
+  
+  # 选择要读取的图层
+  # layer_name <- "YOUR_LAYER_NAME"
+  # singapore_data <- st_read("gadm41_SGP.gpkg", layer = layer_name)
+  outpout$summary_output <- renderPrint({summary(singapore_data)})
+  
+  output$plot_output <- renderPlot({plot(singapore_data)})
+    
 }
 
 # Run the application 
