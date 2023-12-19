@@ -20,6 +20,7 @@ ui <- fluidPage(
         "What's about Singapore",
         tabPanel("Key Demographics", value = "demographics"),
         tabPanel("Education", value="educationplot"),
+        tabPanel("Health",value="health"),
         tabPanel("Conclusion", value = "conclusion"),
         "Singapore VS. Malaysia",
         tabPanel("Comparison", value = "comparison"),
@@ -82,6 +83,12 @@ server <- function(input, output, session) {
            
            educationplot = {
              list(plotOutput("educationPlot",width = "600px"))
+           },
+           
+           health = {
+             list(
+               plotOutput("healthplot",width="600px")
+             )
            },
            
            comparison = {
@@ -263,7 +270,27 @@ server <- function(input, output, session) {
     }
   })
   
+  longhelath_data <- pivot_longer(health_data, cols = starts_with("X"), 
+                                  names_to = "Year", values_to = "Expenditure")
   
+  longhelath_data$Year <- as.integer(sub("X", "", longhelath_data$Year))
+  
+  filteredhealth_data <- longhelath_data %>%
+    filter(Year >= 1997 & Year <= 2021, 
+           Data.Series == "Development Expenditure On Health (Million Dollars)") %>%
+    mutate(Expenditure = gsub(",", "", Expenditure), # 移除逗号
+           Expenditure = as.numeric(Expenditure)) %>% # 转换为数值型
+    select(-Data.Series)
+  
+  output$healthplot <- renderPlot({
+    if(input$tabs == "health"){
+      ggplot(filteredhealth_data, aes(x = Year, y = Expenditure))+
+        geom_area(color="white",fill="red")+
+        theme_dark()+ scale_y_continuous(labels=label_bytes())+
+        labs(title = "Total Government Expenditure on health (1997-2021)",
+             x = "Year", y = "Expenditure (Million Dollars Dollars)")
+    }
+  })
   
   output$comparisontext <- renderText({
     if(input$tabs == "common"){
