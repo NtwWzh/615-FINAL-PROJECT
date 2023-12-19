@@ -20,7 +20,7 @@ ui <- fluidPage(
         "What's about Singapore",
         tabPanel("Key Demographics", value = "demographics"),
         tabPanel("Education", value="educationplot"),
-        tabPanel("Health",value="health"),
+        tabPanel("Health", value="health"),
         tabPanel("Conclusion", value = "conclusion"),
         "Singapore VS. Malaysia",
         tabPanel("Comparison", value = "comparison"),
@@ -141,6 +141,7 @@ server <- function(input, output, session) {
   
   education_data <- read.csv("Government Expenditure on Education.csv")
   
+  health_data <- read.csv("health.csv")
   
   output$map <- renderLeaflet({
     if (input$tabs == "map") {
