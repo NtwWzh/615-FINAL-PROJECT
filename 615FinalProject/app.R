@@ -19,14 +19,18 @@ ui <- fluidPage(
         "What's about Singapore",
         tabPanel("Key Demographics", value = "demographics"),
         tabPanel("Education", value="educationplot"),
-        tabPanel("Health", value="health"),
         tabPanel("Conclusion", value = "conclusion"),
+        "Singapore VS. Malaysia",
         tabPanel("Comparison", value = "comparison"),
-        tabPanel("SWOT Analysis", value = "swot"),
+        tabPanel("Common", value = "common"),
+        "What's More",
+        tabPanel("Strength", value = "strength"),
+        tabPanel("Weakness", value = "weakness"),
+        tabPanel("Opportunities", value = "opportunities"),
+        tabPanel("Threats", value = "threats"),
         tabPanel("Reference", value = "references"),
     
     mainPanel(
-      # 使用uiOutput可以在server端控制显示哪个输出
       uiOutput("tabContent"),
       uiOutput("reference")
     )
@@ -37,7 +41,6 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   
   output$tabContent <- renderUI({
-    # 根据选择的标签页，返回不同的UI组件
     switch(input$tabs,
            map = {
              list(
@@ -52,6 +55,7 @@ server <- function(input, output, session) {
            
            descriptions = {
              list(
+               img(src="singapore-1490401_640.jpg"),
                textOutput("description")
              )
            },
@@ -71,22 +75,44 @@ server <- function(input, output, session) {
            educationplot = {
              list(plotOutput("educationPlot",width = "600px"))
            },
-           health = {
-             list(plotOutput("healthplot", width = "600px"))
-           },
            
            comparison = {
              list(
-               dataTableOutput("comparisontablesocial"),
-               textOutput("comparisontext"),
-               dataTableOutput("comparisontableenvironment")
+               dataTableOutput("comparisontablesocial")
              )
            },
-           swot = {
+           
+           common = {
              list(
-               textOutput("description")
+               img(src="Singapore-vs-Malaysia.png", width = "600px"),
+               textOutput("comparisontext")
              )
            },
+           
+           strength = {
+             list(
+               textOutput("strengthtext")
+             )
+           },
+           
+           weakness = {
+             list(
+               textOutput("weaknesstext")
+             )
+           },
+           
+           opportunities = {
+             list(
+               textOutput("opportunitiestext")
+             )
+           },
+           
+           threats = {
+             list(
+               textOutput("threatstext")
+             )
+           },
+           
            references = {
              list(
                textOutput("reference")
@@ -100,9 +126,7 @@ server <- function(input, output, session) {
   
   education_data <- read.csv("Government Expenditure on Education.csv")
   
-  health_data <- read.csv("Government Expenditure on Education.csv")
   
-  # 渲染地图
   output$map <- renderLeaflet({
     if (input$tabs == "map") {
       leaflet() %>%
@@ -111,7 +135,7 @@ server <- function(input, output, session) {
     }
   })
   
-  # 渲染"Map"下的关键事实表格和描述
+  
   output$keyFactsTable <- renderDataTable({
     if(input$tabs == "keyfacts"){
     key_facts_df <- data.frame(
@@ -128,7 +152,7 @@ server <- function(input, output, session) {
   major financial and business hub in Southeastern Asia."
     }
   })
- 
+
   output$DemographicTable <- renderDataTable({
     if (input$tabs == "demographics") {
       demographic_df <- data.frame(
@@ -210,21 +234,21 @@ server <- function(input, output, session) {
   long_data <- pivot_longer(education_data, cols = starts_with("X"), 
                             names_to = "Year", values_to = "Expenditure")
   
-  # 转换年份列，去除前面的"X"并转换为整数型
+ 
   long_data$Year <- as.integer(sub("X", "", long_data$Year))
   
   filtered_data <- long_data %>%
     filter(Year >= 1992 & Year <= 2022) %>%
     filter(`Data.Series` == "Total Government Expenditure On Education (Thousand Dollars)") %>%
-    mutate(Expenditure = gsub(",", "", Expenditure), # 移除逗号
-           Expenditure = as.numeric(Expenditure)) %>% # 转换为数值型
+    mutate(Expenditure = gsub(",", "", Expenditure),
+           Expenditure = as.numeric(Expenditure)) %>%
     select(-Data.Series)
   
-  # 绘制图表
+  
   output$educationPlot <- renderPlot({
     if(input$tabs == "educationplot"){
     ggplot(filtered_data, aes(x = Year, y = Expenditure)) +
-      geom_line(shape = 1, colour = "blue") +
+      geom_line(colour = "blue") +
       theme_minimal()+scale_y_continuous(labels = label_bytes())+
       labs(title = "Total Government Expenditure on Education (1992-2022)",
            x = "Year", y = "Expenditure (Thousand Dollars)")
@@ -233,35 +257,9 @@ server <- function(input, output, session) {
   
   
   
-  longhealth_data <- pivot_longer(health_data, cols = starts_with("X"), 
-                            names_to = "Year", values_to = "Value")
-  
-  # 转换年份列，去除前面的"X"并转换为整数型
-  longhealth_data$Year <- as.integer(sub("X", "", longhealth_data$Year))
-  
-  filteredhealth_data <- longhealth_data %>%
-    filter(Year >= 1992 & Year <= 2022) %>%
-    filter(`Data.Series` == "Government Health Expenditure (Million Dollars)") %>%
-    mutate(Value = gsub(",", "", Value), # 移除逗号
-           Value = as.numeric(Value)) %>% # 转换为数值型
-    select(-Data.Series)
-  
-  # 绘制图表
-  output$healthplot <- renderPlot({
-    if(input$tabs == "health"){
-      ggplot(filteredhealth_data, aes(x = Year, y = Value)) +
-        geom_line(shape = 1, colour = "blue") +
-        theme_minimal()+scale_y_continuous(labels = label_bytes())+
-        labs(title = "Total Government Expenditure On Education (Million Dollars)",
-             x = "Year", y = "Expenditure (Million Dollars)")
-    }
-  })
-  
-  
-  
   output$comparisontext <- renderText({
-    if(input$tabs == "comparison"){
-      "Singapore and Malaysia, neighboring countries in Southeast Asia, have similarities in
+    if(input$tabs == "common"){
+    "Singapore and Malaysia, neighboring countries in Southeast Asia, have similarities in
       their past, culture, and location. Once part of Malaysia, Singapore became independent
       in 1965 and grew into a prosperous nation. Both places have diverse populations, 
       including Malays, Chinese, and Indians. They use languages like English and Chinese. 
@@ -270,6 +268,7 @@ server <- function(input, output, session) {
       Penang in Malaysia and Marina Bay and Sentosa Island in Singapore."
     }
   })
+  
   
   output$reference <- renderUI({
     if(input$tabs == "references"){
@@ -284,6 +283,13 @@ server <- function(input, output, session) {
            reference/ebook/population/education-and-literacy' target ='_blank'>
            https://www.singstat.gov.sg/publications/reference/ebook/population
            /education-and-literacy</a><br>
+           Singapore plot: <a herf='https://pixabay.com/photos/singapore-marina-bay-sands-1490401/'
+           target='_blank'>
+           https://pixabay.com/photos/singapore-marina-bay-sands-1490401/</a><br>
+           VS plot: <a herf='https://travelsites.com/blog/singapore-vs-malaysia-which-is-best-to-travel/'
+           target='_blank'>
+           https://travelsites.com/blog/singapore-vs-malaysia-which-is-best-to-travel/</a><br>
+           
            ")
     }
   })
