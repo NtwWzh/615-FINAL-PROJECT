@@ -3,25 +3,32 @@ library(shiny)
 library(leaflet)
 library(DT) 
 library(sf)
+library(readxl)
+library(scales)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
 
 ui <- fluidPage(
-  titlePanel("Singapore Analysis"),
-  
-  sidebarLayout(
-    sidebarPanel(
-      tabsetPanel(
-        id = "tabs",  # 添加id属性
+  navlistPanel(
+        id = "tabs",
+        "Lion City - Singapore",
         tabPanel("Map", value = "map"),
+        tabPanel("Key Fact", value = "keyfacts"),
+        tabPanel("Description", value = "descriptions"),
+        "What's about Singapore",
         tabPanel("Key Demographics", value = "demographics"),
+        tabPanel("Education", value="educationplot"),
+        tabPanel("Health", value="health"),
+        tabPanel("Conclusion", value = "conclusion"),
         tabPanel("Comparison", value = "comparison"),
         tabPanel("SWOT Analysis", value = "swot"),
-        tabPanel("Reference", value = "references")
-      )
-    ),
+        tabPanel("Reference", value = "references"),
     
     mainPanel(
       # 使用uiOutput可以在server端控制显示哪个输出
-      uiOutput("tabContent")
+      uiOutput("tabContent"),
+      uiOutput("reference")
     )
   )
 )
@@ -34,17 +41,40 @@ server <- function(input, output, session) {
     switch(input$tabs,
            map = {
              list(
-               leafletOutput("map"),
-               dataTableOutput("keyFactsTable"),
+               leafletOutput("map")
+             )
+           },
+           keyfacts = {
+             list(
+               dataTableOutput("keyFactsTable")
+             )
+           },
+           
+           descriptions = {
+             list(
                textOutput("description")
              )
            },
+           
            demographics = {
              list(
-               dataTableOutput("DemographicTable"),
+               dataTableOutput("DemographicTable")
+             )
+           },
+           
+           conclusion = {
+             list(
                textOutput("demographicetext")
              )
            },
+           
+           educationplot = {
+             list(plotOutput("educationPlot",width = "600px"))
+           },
+           health = {
+             list(plotOutput("healthplot", width = "600px"))
+           },
+           
            comparison = {
              list(
                dataTableOutput("comparisontablesocial"),
@@ -68,6 +98,10 @@ server <- function(input, output, session) {
   
   singapore_data <- st_read("gadm41_SGP.gpkg")
   
+  education_data <- read.csv("Government Expenditure on Education.csv")
+  
+  health_data <- read.csv("Government Expenditure on Education.csv")
+  
   # 渲染地图
   output$map <- renderLeaflet({
     if (input$tabs == "map") {
@@ -79,22 +113,22 @@ server <- function(input, output, session) {
   
   # 渲染"Map"下的关键事实表格和描述
   output$keyFactsTable <- renderDataTable({
+    if(input$tabs == "keyfacts"){
     key_facts_df <- data.frame(
       "General Information" = c("Region", "Capital city", "UN membership date", "National currency", "Official language"),
       "Key Facts" = c("South-eastern Asia", "Singapore", "21-Sep-65", "Singapore Dollar (SGD)", "English/Chinese/Malay/Tamil")
-    )
-    datatable(key_facts_df)
+    )}
   })
   
   output$description <- renderText({
+    if(input$tabs == "descriptions"){
     "Singapore is an island state located in Southeastern Asia. In Malay, 
   the country name is Singapura and it means Lion City. It is known for its modernity, 
   high population density, and diverse culture. The country has a rich history and is a 
   major financial and business hub in Southeastern Asia."
+    }
   })
-  
-  
-  # 渲染"Key Demographics"下的人口统计表格
+ 
   output$DemographicTable <- renderDataTable({
     if (input$tabs == "demographics") {
       demographic_df <- data.frame(
@@ -122,7 +156,7 @@ server <- function(input, output, session) {
   })
   
   output$demographicetext <- renderText({
-    if(input$tabs == "demographics"){
+    if(input$tabs == "conclusion"){
       "In conclusion, Singapore's Gross Domestic Product (GDP) reached $372074 million, 
       showing stable growth, especially with an average annual growth rate of 0.7% based 
       on constant prices in 2015. Singapore's economy is mainly dominated by the service industry,
@@ -173,6 +207,58 @@ server <- function(input, output, session) {
     
   })
   
+  long_data <- pivot_longer(education_data, cols = starts_with("X"), 
+                            names_to = "Year", values_to = "Expenditure")
+  
+  # 转换年份列，去除前面的"X"并转换为整数型
+  long_data$Year <- as.integer(sub("X", "", long_data$Year))
+  
+  filtered_data <- long_data %>%
+    filter(Year >= 1992 & Year <= 2022) %>%
+    filter(`Data.Series` == "Total Government Expenditure On Education (Thousand Dollars)") %>%
+    mutate(Expenditure = gsub(",", "", Expenditure), # 移除逗号
+           Expenditure = as.numeric(Expenditure)) %>% # 转换为数值型
+    select(-Data.Series)
+  
+  # 绘制图表
+  output$educationPlot <- renderPlot({
+    if(input$tabs == "educationplot"){
+    ggplot(filtered_data, aes(x = Year, y = Expenditure)) +
+      geom_line(shape = 1, colour = "blue") +
+      theme_minimal()+scale_y_continuous(labels = label_bytes())+
+      labs(title = "Total Government Expenditure on Education (1992-2022)",
+           x = "Year", y = "Expenditure (Thousand Dollars)")
+    }
+  })
+  
+  
+  
+  longhealth_data <- pivot_longer(health_data, cols = starts_with("X"), 
+                            names_to = "Year", values_to = "Value")
+  
+  # 转换年份列，去除前面的"X"并转换为整数型
+  longhealth_data$Year <- as.integer(sub("X", "", longhealth_data$Year))
+  
+  filteredhealth_data <- longhealth_data %>%
+    filter(Year >= 1992 & Year <= 2022) %>%
+    filter(`Data.Series` == "Government Health Expenditure (Million Dollars)") %>%
+    mutate(Value = gsub(",", "", Value), # 移除逗号
+           Value = as.numeric(Value)) %>% # 转换为数值型
+    select(-Data.Series)
+  
+  # 绘制图表
+  output$healthplot <- renderPlot({
+    if(input$tabs == "health"){
+      ggplot(filteredhealth_data, aes(x = Year, y = Value)) +
+        geom_line(shape = 1, colour = "blue") +
+        theme_minimal()+scale_y_continuous(labels = label_bytes())+
+        labs(title = "Total Government Expenditure On Education (Million Dollars)",
+             x = "Year", y = "Expenditure (Million Dollars)")
+    }
+  })
+  
+  
+  
   output$comparisontext <- renderText({
     if(input$tabs == "comparison"){
       "Singapore and Malaysia, neighboring countries in Southeast Asia, have similarities in
@@ -185,13 +271,23 @@ server <- function(input, output, session) {
     }
   })
   
-  output$reference <- renderText({
+  output$reference <- renderUI({
     if(input$tabs == "references"){
-      "Code guide: chatgpt<br>
-      Map: https://gadm.org/download_country.html
-      "
+      HTML("Code guide: chatgpt<br>
+           Map data: <a href='https://gadm.org/download_country.html' target='_blank'>
+           https://gadm.org/download_country.html</a><br>
+           Singapore data: <a herf='https://data.un.org/en/iso/sg.html' target='_blank'>
+           https://data.un.org/en/iso/sg.html</a><br>
+           Malaysia data: <a herf='https://data.un.org/en/iso/my.html' target='_blank'>
+           https://data.un.org/en/iso/my.html</a><br>
+           Education data: <a herf='https://www.singstat.gov.sg/publications/
+           reference/ebook/population/education-and-literacy' target ='_blank'>
+           https://www.singstat.gov.sg/publications/reference/ebook/population
+           /education-and-literacy</a><br>
+           ")
     }
   })
+  
   
 }
 
