@@ -13,6 +13,7 @@ ui <- fluidPage(
   navlistPanel(
         id = "tabs",
         "Lion City - Singapore",
+        tabPanel("Welcome To Singapore",value="welcome"),
         tabPanel("Map", value = "map"),
         tabPanel("Key Fact", value = "keyfacts"),
         tabPanel("Description", value = "descriptions"),
@@ -42,6 +43,13 @@ server <- function(input, output, session) {
   
   output$tabContent <- renderUI({
     switch(input$tabs,
+           
+           welcome = {
+             list(
+               img(src="https://scontent-bos5-1.xx.fbcdn.net/v/t39.30808-6/309846616_401666482145200_545736847330727583_n.jpg?_nc_cat=100&ccb=1-7&_nc_sid=783fdb&_nc_ohc=4Jgw80THakQAX9NDEDS&_nc_ht=scontent-bos5-1.xx&oh=00_AfCTQQQjRQKgCnrijFD-fO_zsdwE2JovAZeUrFq2LEjjnw&oe=65857DEA")
+             )
+           },
+           
            map = {
              list(
                leafletOutput("map")
@@ -269,6 +277,58 @@ server <- function(input, output, session) {
     }
   })
   
+  output$strengthtext <- renderText({
+    if(input$tabs == "strength"){
+      "Singapore distinguishes itself with a strong commitment to diversity and inclusivity. 
+      The country's growing acceptance of different sexualities and increasing cultural 
+      enrichment through galleries and museums further exemplify its progressive outlook.
+      Singaporeans are known for their warm hospitality and polite manners, and they firmly 
+      reject any instances of homophobia, racism, or xenophobia, emphasizing that individual 
+      beliefs do not represent the entire nation's values. This unwavering dedication to
+      diversity and inclusivity makes Singapore a welcoming and forward-thinking society."
+    }
+  })
+  
+  output$weaknesstext <- renderText({
+    if(input$tabs == "weakness"){
+      "Singapore faces challenges as its economy heavily relies on exports, particularly 
+      to the United States. A downturn in the global economy can significantly impact Singapore's
+      economy, making recovery dependent on the performance of other countries. To mitigate these
+      challenges, Singapore is exploring new markets like China and India, but these markets face 
+      their own economic and environmental issues that may affect Singapore. Trade and Industry
+      Minister Chan Sung Sing suggests that a lack of international perspective among Singaporeans 
+      is a weakness that needs addressing to thrive in the Southeast Asian market. While the government
+      provides aid, some citizens believe self-reflection and addressing internal weaknesses are equally important."
+    }
+  })
+  
+  
+  output$opportunitiestext <- renderText({
+    if(input$tabs == "opportunities"){
+      "Singapore presents various opportunities, particularly in expanding industries such as 
+      digital technologies, aviation, healthcare, and energy, which can lead to increased exports
+      and international business collaborations. Furthermore, the country is investing in 
+      infrastructure development, including a new airport terminal, an expanded sewerage system,
+      and smart city projects, injecting significant funds into healthcare and hospital restructuring.
+      These initiatives not only enhance the quality of life for Singaporeans but also create potential
+      job openings, making Singapore an attractive destination for international businesses and
+      professionals.
+"
+    }
+  })
+  
+  output$threatstext <- renderText({
+    if(input$tabs == "threats"){
+      "Singapore faces significant threats related to terrorism and cybersecurity. 
+      While the country has been successful in averting terrorist attacks due to the 
+      vigilance of security agencies, the rise of radicalized individuals, although without 
+      planned attacks, underscores the need for ongoing security efforts. Additionally, the 
+      growing demand for cybersecurity professionals poses both a threat and an opportunity, 
+      highlighting the increasing importance of technology protection in an advancing digital 
+      landscape."
+    }
+  })
+  
   
   output$reference <- renderUI({
     if(input$tabs == "references"){
@@ -289,7 +349,9 @@ server <- function(input, output, session) {
            VS plot: <a herf='https://travelsites.com/blog/singapore-vs-malaysia-which-is-best-to-travel/'
            target='_blank'>
            https://travelsites.com/blog/singapore-vs-malaysia-which-is-best-to-travel/</a><br>
-           
+           SWOT analysis: <a herf ='https://pestleanalysis.com/swot-analysis-of-singapore/'
+           target='_blank'>
+           https://pestleanalysis.com/swot-analysis-of-singapore/</a>
            ")
     }
   })
